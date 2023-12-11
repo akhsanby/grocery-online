@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  product_id Int @db.Int @id @default(autoincrement())
+  name String @db.VarChar(100)
+  description String? @db.Text
+  price Int @db.Int
+  stock_quantity Int @db.Int
+  thumbnail String? @db.VarChar(255)
+  category_id Int? @db.Int
+  created_at DateTime @default(now())
+  updated_at DateTime? @updatedAt
+
+  category Category? @relation(fields: [category_id], references: [category_id])
+  carts Cart[]
+
+  @@map("products")
+}
+
+model Category {
+  category_id Int @id @default(autoincrement())
+  name String @db.VarChar(100)
+  product_id Product[] 
+
+  @@map("categories")
+}
+
+model User {
+  user_id Int @id @default(autoincrement())
+  first_name String @db.VarChar(50)
+  last_name String @db.VarChar(50)
+  email String @db.VarChar(100) @unique
+  password String @db.VarChar(100)
+  address String? @db.Text
+  phone_number String? @db.VarChar(15)
+  user_level_id Int @db.Int
+  created_at DateTime @default(now())
+  updated_at DateTime? @updatedAt
+
+  user_level UserLevel? @relation(fields: [user_level_id], references: [user_level_id]) 
+  token String? @db.Text
+  carts Cart[]
+
+  @@map("users")
+}
+
+model UserLevel {
+  user_level_id Int @id @default(autoincrement())
+  level_name String @db.VarChar(50)
+  users User[]
+
+  @@map("user_level")
+}
+
+model Cart {
+  cart_id Int @id @default(autoincrement())
+  user_id Int @db.Int
+  product_id Int @db.Int
+  quantity Int @db.Int
+  created_at DateTime @default(now())
+  
+  user User @relation(fields: [user_id], references: [user_id])
+  product Product @relation(fields: [product_id], references: [product_id])
+
+  @@map("carts")
+}

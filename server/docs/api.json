@@ -1,0 +1,43 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Point Of Sales Apotek Restful API",
+    "version": "1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api"
+    }
+  ],
+  "tags": [
+    {
+      "name": "User"
+    }
+  ],
+  "paths": {
+    "/users/register": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Register User"
+      }
+    },
+    "/users/login": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Login User"
+      }
+    },
+    "/users/current": {
+      "put": {
+        "tags": ["User"],
+        "summary": "Update User"
+      }
+    },
+    "/users/logout": {
+      "delete": {
+        "tags": ["User"],
+        "summary": "Logout User"
+      }
+    }
+  }
+}

@@ -1,0 +1,521 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "User Contact Restful API",
+    "version": "1",
+    "description": "Open API for User Contact"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api"
+    }
+  ],
+  "tags": [
+    {
+      "name": "User"
+    },
+    {
+      "name": "Contact"
+    },
+    {
+      "name": "Address"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Register User",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "default": "akhsan"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "default": "Akhsan Bayu"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "default": "rahasia"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "username": {
+                          "type": "string",
+                          "default": "akhsan"
+                        },
+                        "name": {
+                          "type": "string",
+                          "default": "Akhsan Bayu"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "string",
+                      "example": "Username already registered"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorize",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "string",
+                      "example": "Username or password wrong"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "string",
+                      "example": "User is not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/login": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Login User",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "default": "unique-token"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorize",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "string",
+                      "example": "Username or password wrong"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/current": {
+      "patch": {
+        "tags": ["User"],
+        "summary": "Update User",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "default": "Akhsan Bayu"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "default": "rahasia"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "username": {
+                          "type": "string",
+                          "default": "akhsan"
+                        },
+                        "name": {
+                          "type": "string",
+                          "default": "Akhsan Bayu"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "string",
+                      "example": "Name length max 100"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["User"],
+        "summary": "Get Logged In User",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "username": {
+                          "type": "string",
+                          "default": "akhsan"
+                        },
+                        "name": {
+                          "type": "string",
+                          "default": "Akhsan Bayu"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorize",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/logout": {
+      "delete": {
+        "tags": ["User"],
+        "summary": "Logout User",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string",
+                      "default": "OK"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorize",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contacts": {
+      "post": {
+        "tags": ["Contact"],
+        "summary": "Create Contact User",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          }
+        ]
+      },
+      "get": {
+        "tags": ["Contact"],
+        "summary": "Search Contact User",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          }
+        ]
+      }
+    },
+    "/contacts/{contactId}": {
+      "put": {
+        "tags": ["Contact"],
+        "summary": "Update Contact User",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "get": {
+        "tags": ["Contact"],
+        "summary": "Find Contact User",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Contact"],
+        "summary": "Delete Contact User",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/contacts/{contactId}/addresses": {
+      "post": {
+        "tags": ["Address"],
+        "summary": "Create Address",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true
+          }
+        ]
+      },
+      "get": {
+        "tags": ["Address"],
+        "summary": "List Address",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/contacts/{contactId}/addresses/{addressId}": {
+      "put": {
+        "tags": ["Address"],
+        "summary": "Update Address",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "addressId",
+            "in": "path",
+            "required": true
+          }
+        ]
+      },
+      "get": {
+        "tags": ["Address"],
+        "summary": "Find Address",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "addressId",
+            "in": "path",
+            "required": true
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Address"],
+        "summary": "Delete Address",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderAuthorization"
+          },
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "addressId",
+            "in": "path",
+            "required": true
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "HeaderAuthorization": {
+        "name": "Authorization",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "token"
+        }
+      }
+    }
+  }
+}
