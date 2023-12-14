@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
+  searchKeyword: "",
   activePage: 1,
   activeCategory: undefined,
   pageNumbers: undefined,
@@ -11,7 +12,6 @@ const initialState = {
   currentCategories: {
     data: [],
   },
-  showModal: false,
   showDetailModal: false,
   showCreateModal: false,
   product: {
@@ -36,6 +36,9 @@ export const productSlice = createSlice({
   name: "product",
   initialState,
   reducers: {
+    setSearchKeyword: (state, action) => {
+      state.searchKeyword = action.payload;
+    },
     setActivePage: (state, action) => {
       state.activePage = action.payload;
     },
@@ -68,6 +71,6 @@ export const productSlice = createSlice({
   },
 });
 
-export const { setActivePage, setActiveCategory, setPageNumbers, setCurrentProducts, setCurrentCategories, toggleDetailModal, toggleCreateModal, handleCloseModal, handleShowModal, updateProduct, setSelectedProduct } = productSlice.actions;
+export const { setSearchKeyword, setActivePage, setActiveCategory, setPageNumbers, setCurrentProducts, setCurrentCategories, toggleDetailModal, toggleCreateModal, handleCloseModal, handleShowModal, updateProduct, setSelectedProduct } = productSlice.actions;
 
 export default productSlice.reducer;

@@ -1,14 +1,41 @@
+import nookies from "nookies";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleDetailModal, setSelectedProduct } from "@/app/features/product-slice.js";
+import { createCart, updateCart, getCart } from "@/utils/api.js";
 
-export default function ProductBox({ decodeToken }) {
+export default function ProductBox({ decodeToken, currentCategories, currentCarts }) {
   const dispatch = useDispatch();
   const currentProducts = useSelector((state) => state.product.currentProducts.data);
-  const currentCategories = useSelector((state) => state.product.currentCategories.data);
 
   const handleDetailBtn = (selectedProduct) => {
     dispatch(toggleDetailModal());
     dispatch(setSelectedProduct(selectedProduct));
+  };
+
+  const handleAddToCart = async (productId) => {
+    try {
+      const cookies = nookies.get();
+      const cart = currentCarts.find((cart) => cart.product.product_id === productId);
+      if (cart) {
+        console.log("update");
+        const data = {
+          quantity: cart.quantity + 1,
+        };
+        await updateCart(cookies.token, data, cart.cart_id);
+        await getCart(cookies.token, decodeToken.userId);
+      } else {
+        console.log("create");
+        const data = {
+          user_id: decodeToken.userId,
+          product_id: productId,
+          quantity: 1,
+        };
+        await createCart(cookies.token, data);
+        await getCart(cookies.token, decodeToken.userId);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const GenerateCategory = ({ categoryId }) => {
@@ -36,7 +63,7 @@ export default function ProductBox({ decodeToken }) {
             <div className="d-flex align-items-center justify-content-between">
               <div className="btn-group" role="group">
                 <button className="btn btn-success">Buy Now</button>
-                <button className="btn btn-outline-secondary">
+                <button className="btn btn-outline-secondary" onClick={() => handleAddToCart(product.product_id)}>
                   <i className="bi bi-cart-check"></i>
                 </button>
               </div>

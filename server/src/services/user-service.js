@@ -17,7 +17,7 @@ async function register(request) {
     },
   });
 
-  if (countUser === 1) throw new ResponseError(400, "Emaild already registered");
+  if (countUser === 1) throw new ResponseError(400, "Email already registered");
 
   // do password hash with bcrypt
   user.password = await bcrypt.hash(user.password, 10);
@@ -40,13 +40,6 @@ async function login(request) {
     where: {
       email: loginRequest.email,
     },
-    select: {
-      first_name: true,
-      last_name: true,
-      email: true,
-      password: true,
-      user_level_id: true,
-    },
   });
 
   // if user not found
@@ -60,7 +53,6 @@ async function login(request) {
       level_name: true,
     },
   });
-  console.log(userLevel);
 
   // do password compare with bcrypt
   const isPasswordValid = await bcrypt.compare(loginRequest.password, user.password);
@@ -68,9 +60,10 @@ async function login(request) {
 
   // create token when login success
   const userPayload = {
+    userId: user.user_id,
+    userLevel: userLevel.level_name,
     firstName: user.first_name,
     lastName: user.last_name,
-    userLevel: userLevel.level_name,
   };
 
   const token = jwt.sign(userPayload, secretKey, { expiresIn: "1d" });

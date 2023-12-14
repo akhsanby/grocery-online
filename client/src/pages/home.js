@@ -1,81 +1,68 @@
+import { store } from "@/app/store";
 import nookies from "nookies";
 import isAuthorized from "@/utils/is-auth.js";
 import { jwtDecode } from "jwt-decode";
-import { getProducts, getCategories, getProductsByCategory } from "@/utils/api.js";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { getProducts, getCategories, getProductsByCategory, getCart } from "@/utils/api.js";
+import { useEffect } from "react";
+import { withRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import { setActiveCategory, toggleCreateModal } from "@/app/features/product-slice.js";
+import { setSearchKeyword, setActiveCategory, toggleCreateModal } from "@/app/features/product-slice.js";
 
 // components
 import Layout from "@/components/Layout";
-import Navbar from "@/components/Navbar";
 import Pagination from "@/components/Pagination";
 import CreateProductModal from "@/components/modals/CreateProduct";
 import DetailProductModal from "@/components/modals/DetailProduct";
 import ProductBox from "@/components/ProductBox";
 
-export default function Home({ decodeToken }) {
-  const router = useRouter();
+function Home({ router, decodeToken, currentCategories, currentCarts }) {
   const dispatch = useDispatch();
-  const [keyword, setKeyword] = useState("");
-
+  const searchKeyword = useSelector((state) => state.product.searchKeyword);
   const activePage = useSelector((state) => state.product.activePage);
   const activeCategory = useSelector((state) => state.product.activeCategory);
-  const currentCategories = useSelector((state) => state.product.currentCategories.data);
-
-  async function handleSearchByName(e) {
-    e.preventDefault();
-    try {
-      const cookies = nookies.get();
-      await getProducts(cookies.token, undefined, undefined, keyword);
-
-      router.replace({
-        query: { ...router.query, page: 1, q: keyword },
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
   useEffect(() => {
     (async () => {
       const cookies = nookies.get();
-      if (activeCategory && keyword) {
-        const cookies = nookies.get();
-        const { category_id } = currentCategories.find((category) => category.name == activeCategory);
-        await getProductsByCategory(cookies.token, category_id, undefined, undefined, keyword);
+      if (activeCategory && searchKeyword) {
+        const fetchData = setTimeout(async () => {
+          const cookies = nookies.get();
+          const { category_id } = currentCategories.find((category) => category.name == activeCategory);
+          await getProductsByCategory(cookies.token, category_id, undefined, undefined, searchKeyword);
 
-        router.replace({
-          query: { page: 1, q: keyword },
-        });
+          router.replace({
+            query: { page: 1, q: searchKeyword },
+          });
+        }, 500);
+        return () => clearTimeout(fetchData);
       } else if (activeCategory) {
-        setKeyword("");
+        setSearchKeyword("");
         const { category_id } = currentCategories.find((category) => category.name == activeCategory);
         await getProductsByCategory(cookies.token, category_id, activePage);
 
         router.replace({
           query: { page: 1 },
         });
-      } else if (keyword) {
-        await getProducts(cookies.token, undefined, undefined, keyword);
-        router.replace({
-          query: { page: 1, q: keyword },
-        });
+      } else if (searchKeyword) {
+        const fetchData = setTimeout(async () => {
+          await getProducts(cookies.token, undefined, undefined, searchKeyword);
+          router.replace({
+            query: { page: 1, q: searchKeyword },
+          });
+        }, 500);
+        return () => clearTimeout(fetchData);
       } else {
-        setKeyword("");
+        setSearchKeyword("");
         await getProducts(cookies.token);
         router.replace({
           query: { page: 1 },
         });
       }
-      await getCategories(cookies.token);
     })();
-  }, [activeCategory]);
+  }, [activeCategory, searchKeyword]);
 
   return (
-    <Layout>
-      <Navbar decodeToken={decodeToken} />
+    <Layout decodeToken={decodeToken}>
       <div className="container my-4">
         <h2 className="text-center mb-4">{activeCategory ?? "All Products"}</h2>
         <div className="row">
@@ -98,12 +85,9 @@ export default function Home({ decodeToken }) {
           <div className="col-9">
             <div className="row">
               <div className="col-6">
-                <form onSubmit={(e) => handleSearchByName(e)}>
-                  <div className="input-group mb-3">
-                    <input type="text" className="form-control" placeholder="Search..." value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-                    <button className="input-group-text btn btn-primary">Find</button>
-                  </div>
-                </form>
+                <div className="input-group mb-3">
+                  <input type="text" className="form-control" placeholder="Search..." value={searchKeyword} onChange={(e) => dispatch(setSearchKeyword(e.target.value))} />
+                </div>
               </div>
               <div className="col-6">
                 {decodeToken.userLevel === "admin" && (
@@ -117,7 +101,7 @@ export default function Home({ decodeToken }) {
               </div>
             </div>
             <div className="row g-2">
-              <ProductBox decodeToken={decodeToken} />
+              <ProductBox decodeToken={decodeToken} currentCategories={currentCategories} currentCarts={currentCarts.data} />
               <DetailProductModal />
             </div>
             <div className="row mt-3">
@@ -132,6 +116,8 @@ export default function Home({ decodeToken }) {
   );
 }
 
+export default withRouter(Home);
+
 export async function getServerSideProps(context) {
   const cookies = nookies.get(context);
   const decodeToken = jwtDecode(cookies.token);
@@ -145,5 +131,11 @@ export async function getServerSideProps(context) {
     };
   }
 
-  return { props: { decodeToken } };
+  await getCategories(cookies.token);
+  const currentCategories = store.getState().product.currentCategories.data;
+
+  await getCart(cookies.token, decodeToken.userId);
+  const currentCarts = store.getState().cart.currentCarts;
+
+  return { props: { decodeToken, currentCategories, currentCarts } };
 }

@@ -130,10 +130,6 @@ async function update(request) {
 async function remove(productId) {
   productId = validate(getProductValidation, productId);
 
-  if (productId.error) {
-    throw new ResponseError(400, productId.error.details);
-  }
-
   const totalInDatabase = await prismaClient.product.count({
     where: {
       product_id: productId,

@@ -1,6 +1,7 @@
 import axiosClient from "./axios-client.js";
 import { store } from "@/app/store.js";
 import { setCurrentCategories, setCurrentProducts, setPageNumbers } from "@/app/features/product-slice.js";
+import { setCurrentCart } from "@/app/features/cart-slice.js";
 
 export const getCategories = async (token) => {
   const result = await axiosClient.get("/api/category", {
@@ -81,4 +82,34 @@ export const getProductsByCategory = async (token, categoryId, page = 1, size = 
   const { data: products, paging } = result.data;
   store.dispatch(setCurrentProducts({ products, paging }));
   store.dispatch(setPageNumbers({ totalPage: paging.total_page }));
+};
+
+export const getCart = async (token, userId) => {
+  const result = await axiosClient.get(`/api/cart/${userId}`, {
+    headers: { Authorization: token },
+  });
+  const { data: carts, count } = result.data;
+  store.dispatch(setCurrentCart({ carts, count }));
+};
+
+export const createCart = async (token, data) => {
+  const { user_id, product_id, quantity } = data;
+  return await axiosClient.post(
+    "/api/cart",
+    { user_id, product_id, quantity },
+    {
+      headers: { Authorization: token },
+    }
+  );
+};
+
+export const updateCart = async (token, data, cartId) => {
+  const { quantity } = data;
+  return await axiosClient.patch(
+    `/api/cart/${cartId}`,
+    { quantity },
+    {
+      headers: { Authorization: token },
+    }
+  );
 };
