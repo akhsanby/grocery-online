@@ -1,19 +1,15 @@
 import { useDispatch, useSelector } from "react-redux";
-import { setCurrentProducts, handleCloseModal, toggleCreateModal } from "@/app/features/product-slice.js";
-import { setAlert, resetAlert } from "@/app/features/user-slice.js";
+import { setCurrentProducts, toggleCreateModal } from "@/app/features/product-slice.js";
 import nookies from "nookies";
-import { useRouter } from "next/router";
 import { useState } from "react";
 import { createProduct, getProducts } from "@/utils/api.js";
 
 // bootstrap components
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
-import Alert from "react-bootstrap/Alert";
 
 export default function CreateProduct() {
   const dispatch = useDispatch();
-  const alert = useSelector((state) => state.user.alert);
   const showCreateModal = useSelector((state) => state.product.showCreateModal);
   const currentCategories = useSelector((state) => state.product.currentCategories.data);
 
@@ -66,11 +62,6 @@ export default function CreateProduct() {
         <Modal.Title>Create Product</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {alert.isOpen && (
-          <Alert key={alert.color} variant={alert.color}>
-            {alert.text}
-          </Alert>
-        )}
         <div className="mb-1">
           <label className="form-label">Name</label>
           <input type="text" className="form-control form-control-sm" value={newProduct?.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} />

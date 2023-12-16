@@ -22,7 +22,7 @@ userRouter.get("/api/product/:productId", productController.get);
 
 // category api
 userRouter.get("/api/category", categoryController.list);
-// userRouter.get("/api/product", categoryController.get);
+userRouter.get("/api/category/:categoryId", categoryController.get);
 
 // cart api
 userRouter.post("/api/cart", cartController.create);

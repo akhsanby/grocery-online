@@ -6,34 +6,28 @@ import { setActivePage, setCurrentProducts } from "@/app/features/product-slice.
 
 function Pagination({ router }) {
   const cookies = nookies.get();
-  const dispatch = useDispatch();
   const pageNumbers = useSelector((state) => state.product.pageNumbers);
   const activeCategory = useSelector((state) => state.product.activeCategory);
   const currentProducts = useSelector((state) => state.product.currentProducts.data);
   const currentPaging = useSelector((state) => state.product.currentProducts.paging);
-  const currentCategories = useSelector((state) => state.product.currentCategories.data);
 
   const onPageChange = async (newPage) => {
-    console.log(newPage);
-    if (activeCategory) {
-      dispatch(setActivePage(newPage));
-
-      const { category_id } = currentCategories.find((category) => category.name == activeCategory);
-      await getProductsByCategory(cookies.token, category_id, newPage);
+    if (activeCategory.name) {
+      const { paging } = await getProducts(cookies.token, newPage, activeCategory.category_id);
+      setActivePage(paging.page);
       router.replace({
-        query: { ...router.query, page: newPage },
+        query: { page: paging.page },
       });
-    } else if (!router.query.page || router.query.page) {
-      dispatch(setActivePage(newPage));
-
-      await getProducts(cookies.token, newPage);
+    } else {
+      const { paging } = await getProducts(cookies.token, newPage);
+      setActivePage(paging.page);
       router.replace({
-        query: { ...router.query, page: newPage },
+        query: { page: paging.page },
       });
     }
   };
 
-  if (currentProducts.length > 0) {
+  if (currentProducts.length > 0 && pageNumbers.length > 1) {
     return (
       <ul className="pagination">
         <li className="page-item">
@@ -41,14 +35,13 @@ function Pagination({ router }) {
             Previous
           </button>
         </li>
-        {pageNumbers &&
-          pageNumbers.map((number) => (
-            <li key={number} className={`page-item ${number === currentPaging.page ? "active" : ""}`}>
-              <button className="page-link" onClick={() => onPageChange(number)}>
-                {number}
-              </button>
-            </li>
-          ))}
+        {pageNumbers.map((number) => (
+          <li key={number} className={`page-item ${number === currentPaging.page ? "active" : ""}`}>
+            <button className="page-link" onClick={() => onPageChange(number)}>
+              {number}
+            </button>
+          </li>
+        ))}
         <li className="page-item">
           <button className={`page-link ${currentPaging.page == currentPaging.total_page ? "disabled" : ""}`} disabled={currentPaging.page == currentPaging.total_page} onClick={() => onPageChange(currentPaging.page + 1)}>
             Next

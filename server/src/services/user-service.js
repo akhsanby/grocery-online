@@ -6,8 +6,6 @@ import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 import jwt from "jsonwebtoken";
 
-const secretKey = "sangatRahasia";
-
 async function register(request) {
   const user = validate(registerUserValidation, request);
 
@@ -58,6 +56,7 @@ async function login(request) {
   const isPasswordValid = await bcrypt.compare(loginRequest.password, user.password);
   if (!isPasswordValid) throw new ResponseError(401, "Email or password wrong");
 
+  const secretKey = "sangatRahasia";
   // create token when login success
   const userPayload = {
     userId: user.user_id,

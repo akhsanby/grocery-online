@@ -3,19 +3,15 @@ import Link from "next/link";
 import nookies from "nookies";
 import isAuthorized from "@/utils/is-auth.js";
 import { useRouter } from "next/router";
-import { setAlert, setCredential } from "@/app/features/user-slice";
+import { setCredential } from "@/app/features/user-slice";
 import { useSelector, useDispatch } from "react-redux";
 
 // components
 import LayoutAuth from "@/components/LayoutAuth.jsx";
 
-// bootstrap components
-import Alert from "react-bootstrap/Alert";
-
 export default function Login() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const alert = useSelector((state) => state.user.alert);
   const credential = useSelector((state) => state.user.credential);
 
   const handleLogin = async (e) => {
@@ -24,11 +20,8 @@ export default function Login() {
       const resultUser = await axiosClient.post("/api/users/login", credential);
       const { token } = resultUser.data.data;
       nookies.set(null, "token", token);
-
-      router.replace("/home");
+      router.replace("/home?page=1&q=");
     } catch (error) {
-      const { errors } = error.response.data;
-      dispatch(setAlert({ isOpen: true, text: errors, color: "danger" }));
       console.error(error);
     }
   };
@@ -38,11 +31,6 @@ export default function Login() {
       <div className="card" style={{ width: "20rem" }}>
         <h5 className="card-header">Login</h5>
         <div className="card-body">
-          {alert.isOpen && (
-            <Alert key={alert.color} variant={alert.color}>
-              {alert.text}
-            </Alert>
-          )}
           <form className="row g-3" onSubmit={(e) => handleLogin(e)}>
             <div className="col-12">
               <label className="form-label">Email</label>

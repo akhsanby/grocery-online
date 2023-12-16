@@ -2,11 +2,11 @@ import { store } from "@/app/store";
 import nookies from "nookies";
 import isAuthorized from "@/utils/is-auth.js";
 import { jwtDecode } from "jwt-decode";
-import { getProducts, getCategories, getProductsByCategory, getCart } from "@/utils/api.js";
+import { getProducts, getCategories, getCart } from "@/utils/api.js";
 import { useEffect } from "react";
 import { withRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import { setSearchKeyword, setActiveCategory, toggleCreateModal } from "@/app/features/product-slice.js";
+import { setActivePage, setSearchKeyword, setActiveCategory, toggleCreateModal } from "@/app/features/product-slice.js";
 
 // components
 import Layout from "@/components/Layout";
@@ -24,38 +24,25 @@ function Home({ router, decodeToken, currentCategories, currentCarts }) {
   useEffect(() => {
     (async () => {
       const cookies = nookies.get();
-      if (activeCategory && searchKeyword) {
-        const fetchData = setTimeout(async () => {
-          const cookies = nookies.get();
-          const { category_id } = currentCategories.find((category) => category.name == activeCategory);
-          await getProductsByCategory(cookies.token, category_id, undefined, undefined, searchKeyword);
-
-          router.replace({
-            query: { page: 1, q: searchKeyword },
-          });
-        }, 500);
-        return () => clearTimeout(fetchData);
-      } else if (activeCategory) {
-        setSearchKeyword("");
-        const { category_id } = currentCategories.find((category) => category.name == activeCategory);
-        await getProductsByCategory(cookies.token, category_id, activePage);
-
+      if (activeCategory.name && searchKeyword) {
+        const { paging } = await getProducts(cookies.token, activePage, activeCategory.category_id, searchKeyword);
         router.replace({
-          query: { page: 1 },
+          query: { page: paging.page, q: searchKeyword },
+        });
+      } else if (activeCategory.name) {
+        const { paging } = await getProducts(cookies.token, activePage, activeCategory.category_id);
+        router.replace({
+          query: { page: paging.page },
         });
       } else if (searchKeyword) {
-        const fetchData = setTimeout(async () => {
-          await getProducts(cookies.token, undefined, undefined, searchKeyword);
-          router.replace({
-            query: { page: 1, q: searchKeyword },
-          });
-        }, 500);
-        return () => clearTimeout(fetchData);
-      } else {
-        setSearchKeyword("");
-        await getProducts(cookies.token);
+        await getProducts(cookies.token, activePage, undefined, searchKeyword);
         router.replace({
-          query: { page: 1 },
+          query: { q: searchKeyword },
+        });
+      } else {
+        await getProducts(cookies.token, activePage);
+        router.replace({
+          query: {},
         });
       }
     })();
@@ -64,18 +51,18 @@ function Home({ router, decodeToken, currentCategories, currentCarts }) {
   return (
     <Layout decodeToken={decodeToken}>
       <div className="container my-4">
-        <h2 className="text-center mb-4">{activeCategory ?? "All Products"}</h2>
+        <h2 className="text-center mb-4">{activeCategory.name || "All Products"}</h2>
         <div className="row">
           <div className="col-3">
             <div className="card">
               <div className="card-header fw-bold">Category</div>
               <ul className="list-group list-group-flush">
-                <li className={`list-group-item pointer ${!activeCategory ? "active" : ""}`} onClick={() => dispatch(setActiveCategory(undefined))}>
+                <li className={`list-group-item pointer ${!activeCategory.name ? "active" : ""}`} onClick={() => dispatch(setActiveCategory({ category_id: 0, name: "" }))}>
                   All Products
                 </li>
                 {currentCategories.length > 0 &&
                   currentCategories.map((category, index) => (
-                    <li className={`list-group-item pointer ${activeCategory === category.name ? "active" : ""}`} key={index} onClick={() => dispatch(setActiveCategory(category.name))}>
+                    <li className={`list-group-item pointer ${activeCategory.name === category.name ? "active" : ""}`} key={index} onClick={() => dispatch(setActiveCategory({ category_id: category.category_id, name: category.name }))}>
                       {category.name}
                     </li>
                   ))}

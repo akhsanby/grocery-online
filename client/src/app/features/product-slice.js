@@ -3,7 +3,10 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   searchKeyword: "",
   activePage: 1,
-  activeCategory: undefined,
+  activeCategory: {
+    category_id: undefined,
+    name: "",
+  },
   pageNumbers: undefined,
   currentProducts: {
     data: [],
@@ -42,9 +45,11 @@ export const productSlice = createSlice({
     setActivePage: (state, action) => {
       state.activePage = action.payload;
     },
-    setActiveCategory: (state, action) => {
-      state.activePage = 1;
-      state.activeCategory = action.payload;
+    setActiveCategory: (state, { payload }) => {
+      state.activeCategory = {
+        category_id: payload.category_id,
+        name: payload.name,
+      };
     },
     setPageNumbers: (state, { payload }) => {
       state.pageNumbers = Array.from({ length: payload.totalPage }, (_, index) => index + 1);

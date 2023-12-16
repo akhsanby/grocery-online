@@ -40,7 +40,7 @@ export default function ProductBox({ decodeToken, currentCategories, currentCart
 
   const GenerateCategory = ({ categoryId }) => {
     const category = currentCategories.find((category) => categoryId === category.category_id);
-    return <span className="badge text-bg-info">{category?.name}</span>;
+    return <span className="badge text-bg-info">{category.name}</span>;
   };
 
   if (currentProducts.length > 0) {

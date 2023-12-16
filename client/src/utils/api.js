@@ -9,6 +9,15 @@ export const getCategories = async (token) => {
   });
   const { data: categories } = result.data;
   store.dispatch(setCurrentCategories({ categories }));
+  return categories;
+};
+
+export const getCategory = async (token, categoryId) => {
+  const result = await axiosClient.get(`/api/category/${categoryId}`, {
+    headers: { Authorization: token },
+  });
+  const { data: category } = result.data;
+  return category;
 };
 
 export const createProduct = async (token, data) => {
@@ -47,20 +56,29 @@ export const updateProduct = async (token, data) => {
   );
 };
 
-export const getProducts = async (token, page = 1, size = 12, keyword = "") => {
-  let result;
-  if (keyword) {
-    result = await axiosClient.get(`/api/product?page=${page}&size=${size}&name=${keyword}`, {
-      headers: { Authorization: token },
-    });
-  } else {
-    result = await axiosClient.get(`/api/product?page=${page}&size=${size}`, {
-      headers: { Authorization: token },
-    });
+export const getProducts = async (token, page, categoryId, keyword) => {
+  const params = {};
+
+  if (page) {
+    params.page = page;
   }
+
+  if (categoryId) {
+    params.category_id = categoryId;
+  }
+
+  if (keyword) {
+    params.name = keyword;
+  }
+
+  const result = await axiosClient.get(`/api/product`, {
+    headers: { Authorization: token },
+    params,
+  });
   const { data: products, paging } = result.data;
   store.dispatch(setCurrentProducts({ products, paging }));
   store.dispatch(setPageNumbers({ totalPage: paging.total_page }));
+  return { products, paging };
 };
 
 export const removeProduct = async (token, productId) =>
@@ -68,28 +86,13 @@ export const removeProduct = async (token, productId) =>
     headers: { Authorization: token },
   });
 
-export const getProductsByCategory = async (token, categoryId, page = 1, size = 12, keyword = "") => {
-  let result;
-  if (keyword) {
-    result = await axiosClient.get(`/api/product?category_id=${categoryId}&page=${page}&size=${size}&name=${keyword}`, {
-      headers: { Authorization: token },
-    });
-  } else {
-    result = await axiosClient.get(`/api/product?category_id=${categoryId}&page=${page}&size=${size}`, {
-      headers: { Authorization: token },
-    });
-  }
-  const { data: products, paging } = result.data;
-  store.dispatch(setCurrentProducts({ products, paging }));
-  store.dispatch(setPageNumbers({ totalPage: paging.total_page }));
-};
-
 export const getCart = async (token, userId) => {
   const result = await axiosClient.get(`/api/cart/${userId}`, {
     headers: { Authorization: token },
   });
   const { data: carts, count } = result.data;
   store.dispatch(setCurrentCart({ carts, count }));
+  return { carts, count };
 };
 
 export const createCart = async (token, data) => {
