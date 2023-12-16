@@ -1,9 +1,0 @@
-.productListContainer {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.listGroup {
-  flex: 1;
-  min-width: 0;
-}

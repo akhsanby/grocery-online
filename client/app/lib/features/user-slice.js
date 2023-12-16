@@ -1,11 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  alert: {
-    isOpen: false,
-    text: "",
-    color: "",
-  },
   credential: {
     email: "",
     password: "",
@@ -23,16 +18,6 @@ export const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setAlert: (state, { payload }) => {
-      state.alert = { ...state.alert, ...payload };
-    },
-    resetAlert: (state) => {
-      state.alert = {
-        isOpen: false,
-        text: "",
-        color: "",
-      };
-    },
     setCredential: (state, { payload }) => {
       state.credential = { ...state.credential, ...payload };
     },
@@ -42,6 +27,6 @@ export const userSlice = createSlice({
   },
 });
 
-export const { setAlert, resetAlert, setCredential, setRegisterData } = userSlice.actions;
+export const { setCredential, setRegisterData } = userSlice.actions;
 
 export default userSlice.reducer;
