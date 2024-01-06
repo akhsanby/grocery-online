@@ -1,4 +1,16 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axiosClient from "@/utils/axios-client";
+import nookies from "nookies";
+
+export const getProducts = createAsyncThunk("product/getProducts", async (queryParams = {}, thunkAPI) => {
+  const { token } = nookies.get();
+  const result = await axiosClient.get("/api/product", {
+    headers: { Authorization: token },
+    params: queryParams,
+  });
+  const { data, paging } = result.data;
+  return { data, paging };
+});
 
 const initialState = {
   searchKeyword: "",
@@ -8,23 +20,12 @@ const initialState = {
     name: "",
   },
   pageNumbers: undefined,
-  currentProducts: {
+  products: {
     data: [],
     paging: {},
   },
-  currentCategories: {
-    data: [],
-  },
   showDetailModal: false,
   showCreateModal: false,
-  product: {
-    product_id: 0,
-    name: "",
-    description: "",
-    price: 0,
-    stock_quantity: 0,
-    category_id: 0,
-  },
   selectedProduct: {
     product_id: 0,
     name: "",
@@ -67,15 +68,21 @@ export const productSlice = createSlice({
     toggleCreateModal: (state) => {
       state.showCreateModal = !state.showCreateModal;
     },
-    updateProduct: (state, { payload }) => {
-      state.product = { ...state.product, ...payload };
-    },
     setSelectedProduct: (state, { payload }) => {
       state.selectedProduct = { ...state.selectedProduct, ...payload };
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase(getProducts.fulfilled, (state, action) => {
+      const { data, paging } = action.payload;
+      state.products.data = data;
+      state.products.paging = paging;
+
+      state.pageNumbers = Array.from({ length: paging.total_page }, (_, index) => index + 1);
+    });
+  },
 });
 
-export const { setSearchKeyword, setActivePage, setActiveCategory, setPageNumbers, setCurrentProducts, setCurrentCategories, toggleDetailModal, toggleCreateModal, handleCloseModal, handleShowModal, updateProduct, setSelectedProduct } = productSlice.actions;
+export const { setSearchKeyword, setActivePage, setActiveCategory, setPageNumbers, setCurrentProducts, setCurrentCategories, toggleDetailModal, toggleCreateModal, handleCloseModal, handleShowModal, setSelectedProduct } = productSlice.actions;
 
 export default productSlice.reducer;
