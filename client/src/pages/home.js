@@ -5,8 +5,6 @@ import { withRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { setSearchKeyword, getProducts, toggleCreateModal } from "@/app/features/product-slice.js";
 import { useEffect } from "react";
-import { useWindowSize } from "@uidotdev/usehooks";
-
 // components
 import Layout from "@/components/Layout";
 import Pagination from "@/components/Pagination";
@@ -17,9 +15,7 @@ import CategoryBox from "@/components/CategoryBox";
 
 function Home({ router, decodeToken }) {
   const dispatch = useDispatch();
-  const screenSize = useWindowSize();
   const searchKeyword = useSelector((state) => state.product.searchKeyword);
-  const activeCategory = useSelector((state) => state.product.activeCategory);
 
   function handleSearchByKeyword(e) {
     const keyword = e.target.value;
@@ -51,36 +47,34 @@ function Home({ router, decodeToken }) {
   return (
     <Layout decodeToken={decodeToken}>
       <div className="container my-4">
-        <h2 className="text-center mb-4">{activeCategory.name || "All Products"}</h2>
         <div className="row">
-          <CategoryBox />
-          <div className={`${screenSize.width >= 768 ? "col-9" : "col-8"}`}>
-            <div className="row">
-              <div className="col-6">
-                <div className="input-group mb-3">
-                  <input type="text" className="form-control" placeholder="Search..." value={searchKeyword} onChange={(e) => handleSearchByKeyword(e)} />
-                </div>
-              </div>
-              <div className="col-6">
-                {decodeToken.userLevel === "admin" && (
-                  <div className="mb-3 float-end">
-                    <button type="button" className="btn btn-primary" onClick={() => dispatch(toggleCreateModal())}>
-                      Create Product
-                    </button>
-                    <CreateProductModal />
-                  </div>
-                )}
-              </div>
+          <div className="col-9">
+            <div className="input-group mb-3">
+              <span className="input-group-text bg-white" style={{ borderRight: "none" }}>
+                <i className="bi bi-search"></i>
+              </span>
+              <input type="text" className="form-control" style={{ borderLeft: "none" }} placeholder="Search..." value={searchKeyword} onChange={(e) => handleSearchByKeyword(e)} />
             </div>
-            <div className="row g-2">
-              <ProductBox decodeToken={decodeToken} />
-              <DetailProductModal />
-            </div>
-            <div className="row mt-3">
-              <div className="col-4 offset-4 d-flex justify-content-center">
-                <Pagination />
+          </div>
+          <div className="col-3">
+            {decodeToken.userLevel === "admin" && (
+              <div className="mb-3 float-end">
+                <button type="button" className="btn btn-primary" onClick={() => dispatch(toggleCreateModal())}>
+                  Create Product
+                </button>
+                <CreateProductModal />
               </div>
-            </div>
+            )}
+          </div>
+        </div>
+        <CategoryBox />
+        <div className="row g-2">
+          <ProductBox decodeToken={decodeToken} />
+          <DetailProductModal />
+        </div>
+        <div className="row mt-3">
+          <div className="col-4 offset-4 d-flex justify-content-center">
+            <Pagination />
           </div>
         </div>
       </div>
