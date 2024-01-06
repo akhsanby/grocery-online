@@ -9,6 +9,9 @@ async function create(request) {
   const existingData = await prismaClient.cart.findFirst({
     where: {
       product_id: request.product_id,
+      AND: {
+        user_id: request.user_id,
+      },
     },
   });
 

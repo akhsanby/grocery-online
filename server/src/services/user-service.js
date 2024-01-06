@@ -1,9 +1,8 @@
-import { registerUserValidation, loginUserValidation, getUserValidation, updateUserValidation } from "../validation/user-validation.js";
+import { registerUserValidation, loginUserValidation, getUserValidation, updateUserValidation, updateUserPasswordValidation } from "../validation/user-validation.js";
 import validate from "../validation/validation.js";
 import { prismaClient } from "../app/database.js";
 import { ResponseError } from "../error/response-error.js";
 import bcrypt from "bcrypt";
-import { v4 as uuid } from "uuid";
 import jwt from "jsonwebtoken";
 
 async function register(request) {
@@ -136,10 +135,6 @@ const update = async (request) => {
     data.last_name = user.last_name;
   }
 
-  if (user.password) {
-    data.password = await bcrypt.hash(user.password, 10);
-  }
-
   if (user.address) {
     data.address = user.address;
   }
@@ -187,10 +182,46 @@ const logout = async (email) => {
   });
 };
 
+async function update_password(request) {
+  request = validate(updateUserPasswordValidation, request);
+
+  const totaluserInDatabase = await prismaClient.user.count({
+    where: {
+      email: request.email,
+    },
+  });
+
+  if (totaluserInDatabase !== 1) throw new ResponseError(404, "User is not found");
+
+  const user = await prismaClient.user.findFirst({
+    where: {
+      email: request.email,
+    },
+  });
+
+  // do password compare with bcrypt
+  const isPasswordSame = await bcrypt.compare(request.password, user.password);
+  if (isPasswordSame) throw new ResponseError(400, "Password cannot same as current password, please try other");
+
+  const generatePassword = await bcrypt.hash(request.password, 10);
+  return await prismaClient.user.update({
+    where: {
+      email: user.email,
+    },
+    data: {
+      password: generatePassword,
+    },
+    select: {
+      email: true,
+    },
+  });
+}
+
 export default {
   register,
   login,
   get,
   update,
   logout,
+  update_password,
 };
