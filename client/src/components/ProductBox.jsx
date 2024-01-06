@@ -4,7 +4,6 @@ import { getCarts } from "@/app/features/cart-slice.js";
 import { createCart } from "@/utils/api.js";
 import { useEffect } from "react";
 import { DOLLAR } from "@/utils/currency.js";
-import Image from "next/image";
 
 export default function ProductBox({ decodeToken }) {
   const dispatch = useDispatch();
@@ -23,7 +22,6 @@ export default function ProductBox({ decodeToken }) {
   };
 
   const handleAddToCart = async (productId) => {
-    console.log(productId);
     try {
       const data = {
         user_id: decodeToken.userId,
@@ -42,8 +40,8 @@ export default function ProductBox({ decodeToken }) {
     return <span className="badge text-bg-info">{category.name || "Loading..."}</span>;
   };
 
-  const AddToCartBtn = ({ productId }) => {
-    const isItemExist = carts.find((cart) => cart.product.product_id === productId);
+  const AddToCartBtn = ({ product }) => {
+    const isItemExist = carts.find((cart) => cart.product.product_id === product.product_id);
     if (isItemExist) {
       return (
         <button className="btn btn-secondary">
@@ -51,8 +49,13 @@ export default function ProductBox({ decodeToken }) {
         </button>
       );
     }
+
+    if (product.stock_quantity === 0) {
+      return <div></div>;
+    }
+
     return (
-      <button className="btn btn-outline-secondary" onClick={() => handleAddToCart(productId)}>
+      <button className="btn btn-outline-secondary" onClick={() => handleAddToCart(product.product_id)}>
         <i className="bi bi-cart-check"></i>
       </button>
     );
@@ -66,7 +69,7 @@ export default function ProductBox({ decodeToken }) {
     );
 
   return products.map((product, index) => (
-    <div className="col-sm-10 col-md-6 col-lg-4" key={index}>
+    <div className="col-sm-6 col-md-4 col-lg-3" key={index}>
       <div className="card">
         <div className="position-absolute" style={{ right: "5px", top: "2px" }}>
           <GenerateCategory categoryId={product.category_id} />
@@ -85,8 +88,7 @@ export default function ProductBox({ decodeToken }) {
           </div>
           <div className="d-flex align-items-center justify-content-between">
             <div className="btn-group" role="group">
-              <button className="btn btn-success">Buy Now</button>
-              <AddToCartBtn productId={product.product_id} />
+              <AddToCartBtn product={product} />
             </div>
             {decodeToken?.userLevel === "admin" && (
               <div className="btn-group" role="group">
