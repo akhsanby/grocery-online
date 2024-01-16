@@ -23,6 +23,7 @@ model Product {
 
   category Category? @relation(fields: [category_id], references: [category_id])
   carts Cart[]
+  history HistoriesOnProducts[]
 
   @@map("products")
 }
@@ -50,6 +51,7 @@ model User {
   user_level UserLevel? @relation(fields: [user_level_id], references: [user_level_id]) 
   token String? @db.Text
   carts Cart[]
+  history History[]
 
   @@map("users")
 }
@@ -73,4 +75,36 @@ model Cart {
   product Product @relation(fields: [product_id], references: [product_id])
 
   @@map("carts")
+}
+
+model History {
+  history_id Int @id @default(autoincrement())
+  user_id Int @db.Int
+  user User @relation(fields: [user_id], references: [user_id]) 
+  full_name String @db.VarChar(100)
+  email String @db.VarChar(100)
+  address String @db.Text
+
+  transaction_id String @db.VarChar(100) @unique
+  transaction_detail String @db.Text
+
+  product HistoriesOnProducts[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime? @updatedAt
+
+  @@map("histories")
+}
+
+model HistoriesOnProducts {
+  product_id Int @db.Int
+  product Product @relation(fields: [product_id], references: [product_id])
+  history_id Int @db.Int
+  history History @relation(fields: [history_id], references: [history_id])
+  assignedAt DateTime @default(now())
+  assignedBy String @db.VarChar(100)
+  quantity Int @db.Int
+
+  @@id([product_id, history_id])
+  @@map("histories_on_products")
 }

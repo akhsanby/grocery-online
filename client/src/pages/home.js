@@ -1,130 +1,80 @@
 import nookies from "nookies";
 import isAuthorized from "@/utils/is-auth.js";
 import { jwtDecode } from "jwt-decode";
-import { getProducts, getCategories, getProductsByCategory } from "@/utils/api.js";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { withRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-import { setActiveCategory, toggleCreateModal } from "@/app/features/product-slice.js";
-
+import { setSearchKeyword, getProducts, toggleCreateModal } from "@/app/features/product-slice.js";
+import { useEffect } from "react";
 // components
 import Layout from "@/components/Layout";
-import Navbar from "@/components/Navbar";
 import Pagination from "@/components/Pagination";
 import CreateProductModal from "@/components/modals/CreateProduct";
 import DetailProductModal from "@/components/modals/DetailProduct";
 import ProductBox from "@/components/ProductBox";
+import CategoryBox from "@/components/CategoryBox";
 
-export default function Home({ decodeToken }) {
-  const router = useRouter();
+function Home({ router, decodeToken }) {
   const dispatch = useDispatch();
-  const [keyword, setKeyword] = useState("");
+  const searchKeyword = useSelector((state) => state.product.searchKeyword);
 
-  const activePage = useSelector((state) => state.product.activePage);
-  const activeCategory = useSelector((state) => state.product.activeCategory);
-  const currentCategories = useSelector((state) => state.product.currentCategories.data);
+  function handleSearchByKeyword(e) {
+    const keyword = e.target.value;
+    dispatch(setSearchKeyword(keyword));
 
-  async function handleSearchByName(e) {
-    e.preventDefault();
-    try {
-      const cookies = nookies.get();
-      await getProducts(cookies.token, undefined, undefined, keyword);
+    router.push({ query: { page: 1, q: keyword } }, undefined, { shallow: true });
 
-      router.replace({
-        query: { ...router.query, page: 1, q: keyword },
-      });
-    } catch (error) {
-      console.log(error);
+    if (keyword !== "") {
+      const queryParams = {
+        page: 1,
+        name: keyword,
+      };
+      dispatch(getProducts(queryParams));
+    } else {
+      const queryParams = {};
+      dispatch(getProducts(queryParams));
     }
   }
 
   useEffect(() => {
-    (async () => {
-      const cookies = nookies.get();
-      if (activeCategory && keyword) {
-        const cookies = nookies.get();
-        const { category_id } = currentCategories.find((category) => category.name == activeCategory);
-        await getProductsByCategory(cookies.token, category_id, undefined, undefined, keyword);
-
-        router.replace({
-          query: { page: 1, q: keyword },
-        });
-      } else if (activeCategory) {
-        setKeyword("");
-        const { category_id } = currentCategories.find((category) => category.name == activeCategory);
-        await getProductsByCategory(cookies.token, category_id, activePage);
-
-        router.replace({
-          query: { page: 1 },
-        });
-      } else if (keyword) {
-        await getProducts(cookies.token, undefined, undefined, keyword);
-        router.replace({
-          query: { page: 1, q: keyword },
-        });
-      } else {
-        setKeyword("");
-        await getProducts(cookies.token);
-        router.replace({
-          query: { page: 1 },
-        });
-      }
-      await getCategories(cookies.token);
-    })();
-  }, [activeCategory]);
+    if (router.query.page) {
+      const queryParams = {
+        page: router.query.page,
+      };
+      dispatch(getProducts(queryParams));
+    }
+  }, []);
 
   return (
-    <Layout>
-      <Navbar decodeToken={decodeToken} />
+    <Layout decodeToken={decodeToken}>
       <div className="container my-4">
-        <h2 className="text-center mb-4">{activeCategory ?? "All Products"}</h2>
         <div className="row">
-          <div className="col-3">
-            <div className="card">
-              <div className="card-header fw-bold">Category</div>
-              <ul className="list-group list-group-flush">
-                <li className={`list-group-item pointer ${!activeCategory ? "active" : ""}`} onClick={() => dispatch(setActiveCategory(undefined))}>
-                  All Products
-                </li>
-                {currentCategories.length > 0 &&
-                  currentCategories.map((category, index) => (
-                    <li className={`list-group-item pointer ${activeCategory === category.name ? "active" : ""}`} key={index} onClick={() => dispatch(setActiveCategory(category.name))}>
-                      {category.name}
-                    </li>
-                  ))}
-              </ul>
+          <div className="col-9">
+            <div className="input-group mb-3">
+              <span className="input-group-text bg-white" style={{ borderRight: "none" }}>
+                <i className="bi bi-search"></i>
+              </span>
+              <input type="text" className="form-control" style={{ borderLeft: "none" }} placeholder="Search..." value={searchKeyword} onChange={(e) => handleSearchByKeyword(e)} />
             </div>
           </div>
-          <div className="col-9">
-            <div className="row">
-              <div className="col-6">
-                <form onSubmit={(e) => handleSearchByName(e)}>
-                  <div className="input-group mb-3">
-                    <input type="text" className="form-control" placeholder="Search..." value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-                    <button className="input-group-text btn btn-primary">Find</button>
-                  </div>
-                </form>
+          <div className="col-3">
+            {decodeToken.userLevel === "admin" && (
+              <div className="mb-3 float-end">
+                <button type="button" className="btn btn-primary" onClick={() => dispatch(toggleCreateModal())}>
+                  Create Product
+                </button>
+                <CreateProductModal />
               </div>
-              <div className="col-6">
-                {decodeToken.userLevel === "admin" && (
-                  <div className="mb-3 float-end">
-                    <button type="button" className="btn btn-primary" onClick={() => dispatch(toggleCreateModal())}>
-                      Create Product
-                    </button>
-                    <CreateProductModal />
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="row g-2">
-              <ProductBox decodeToken={decodeToken} />
-              <DetailProductModal />
-            </div>
-            <div className="row mt-3">
-              <div className="col-4 offset-4 d-flex justify-content-center">
-                <Pagination />
-              </div>
-            </div>
+            )}
+          </div>
+        </div>
+        <CategoryBox />
+        <div className="row g-2">
+          <ProductBox decodeToken={decodeToken} />
+          <DetailProductModal />
+        </div>
+        <div className="row mt-3">
+          <div className="col-4 offset-4 d-flex justify-content-center">
+            <Pagination />
           </div>
         </div>
       </div>
@@ -132,11 +82,13 @@ export default function Home({ decodeToken }) {
   );
 }
 
-export async function getServerSideProps(context) {
-  const cookies = nookies.get(context);
-  const decodeToken = jwtDecode(cookies.token);
+export default withRouter(Home);
 
-  if ((await isAuthorized(cookies.token)) === false) {
+export async function getServerSideProps(context) {
+  const { token } = nookies.get(context);
+  const decodeToken = jwtDecode(token);
+
+  if ((await isAuthorized(token)) === false) {
     return {
       redirect: {
         destination: "/",

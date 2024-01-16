@@ -1,7 +1,7 @@
 import { prismaClient } from "../app/database.js";
 import { ResponseError } from "../error/response-error.js";
-import { getCategoryValidation } from "../validation/category-validation.js";
 import validate from "../validation/validation.js";
+import { getCategoryValidation } from "../validation/category-validation.js";
 
 async function list() {
   const categories = await prismaClient.category.findMany({
@@ -18,33 +18,18 @@ async function list() {
   return categories;
 }
 
-async function get(request) {
-  request = validate(getCategoryValidation, request);
+async function get(categoryId) {
+  categoryId = validate(getCategoryValidation, categoryId);
 
-  const skip = (request.page - 1) * request.size;
-
-  const productsByCategory = await prismaClient.product.findMany({
+  return await prismaClient.category.findFirstOrThrow({
     where: {
-      category_id: request.category_id,
+      category_id: categoryId,
     },
-    take: request.size,
-    skip: skip,
-  });
-
-  const totalItems = await prismaClient.product.count({
-    where: { category_id: request.category_id },
-  });
-
-  if (!productsByCategory) throw new ResponseError(404, "Product not found");
-
-  return {
-    products: productsByCategory,
-    paging: {
-      page: request.page,
-      total_item: totalItems,
-      total_page: Math.ceil(totalItems / request.size),
+    select: {
+      category_id: true,
+      name: true,
     },
-  };
+  });
 }
 
 export default {

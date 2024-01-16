@@ -20,8 +20,13 @@ const updateUserValidation = Joi.object({
   last_name: Joi.string().max(50).optional(),
   email: Joi.string().email().max(100).required(),
   password: Joi.string().max(255).optional(),
-  address: Joi.string().max(255).optional(),
-  phone_number: Joi.string().max(15).optional(),
+  address: Joi.string().max(255).optional().allow(""),
+  phone_number: Joi.string().max(15).optional().allow(""),
 });
 
-export { registerUserValidation, loginUserValidation, getUserValidation, updateUserValidation };
+const updateUserPasswordValidation = Joi.object({
+  email: Joi.string().email().max(100).required(),
+  password: Joi.string().max(255).required(),
+});
+
+export { registerUserValidation, loginUserValidation, getUserValidation, updateUserValidation, updateUserPasswordValidation };

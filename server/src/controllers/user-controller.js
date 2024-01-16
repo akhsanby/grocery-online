@@ -14,6 +14,13 @@ async function register(req, res, next) {
 async function login(req, res, next) {
   try {
     const result = await userService.login(req.body);
+
+    // res.cookie("token", result.token, {
+    //   httpOnly: true,
+    //   domain: "http://localhost",
+    //   sameSite: "strict",
+    // });
+
     res.status(200).json({
       data: result,
     });
@@ -61,10 +68,27 @@ async function logout(req, res, next) {
   }
 }
 
+async function update_password(req, res, next) {
+  try {
+    const request = {
+      email: req.body.email,
+      password: req.body.password,
+    };
+
+    const result = await userService.update_password(request);
+    res.status(200).json({
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export default {
   register,
   login,
   get,
   update,
   logout,
+  update_password,
 };

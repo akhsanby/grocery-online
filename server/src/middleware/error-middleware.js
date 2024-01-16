@@ -7,7 +7,6 @@ export const errorMiddleware = async (err, req, res, next) => {
   }
 
   if (err instanceof ResponseError) {
-    console.log(err);
     res
       .status(err.status)
       .json({

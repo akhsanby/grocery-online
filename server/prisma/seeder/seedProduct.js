@@ -17,9 +17,9 @@ export default async function seedProducts() {
       const randomCategoryId = getRandomInt(1, 10);
       const productName = `Product ${i + 1}`;
       const productDescription = `Description for Product ${i + 1}`;
-      const productPrice = getRandomInt(10000, 1000000);
-      const productStockQuantity = getRandomInt(1, 100);
-      const productThumbnail = `https://placehold.co/400x200`;
+      const productPrice = getRandomInt(1, 100);
+      const productStockQuantity = getRandomInt(10, 100);
+      const productThumbnail = `https://placehold.co/400x400`;
 
       productsData.push({
         name: productName,

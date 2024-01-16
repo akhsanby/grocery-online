@@ -5,111 +5,98 @@ import { useState } from "react";
 import nookies from "nookies";
 import isAuthorized from "@/utils/is-auth.js";
 import { useSelector, useDispatch } from "react-redux";
-import { setAlert, setRegisterData } from "@/app/features/user-slice.js";
+import { toggleAlert, setRegisterData } from "@/app/features/user-slice.js";
+import validate, { registerUserValidation } from "@/utils/validation/validate";
 
 // components
 import LayoutAuth from "@/components/LayoutAuth.jsx";
-
-// bootstrap components
-import Alert from "react-bootstrap/Alert";
+import CustomAlert from "@/components/CustomAlert.jsx";
 
 export default function Register() {
   const router = useRouter();
   const dispatch = useDispatch();
-  const alert = useSelector((state) => state.user.alert);
   const registerData = useSelector((state) => state.user.registerData);
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const checkConfirmPassword = () => {
-    if (registerData.password !== confirmPassword) {
-      dispatch(
-        setRegisterData({
-          first_name: registerData.first_name,
-          last_name: registerData.last_name,
-          email: registerData.email,
-          password: "",
-        })
-      );
-      setConfirmPassword("");
-      dispatch(
-        setAlert({
-          isOpen: true,
-          text: "Confirm password not match",
-          color: "danger",
-        })
-      );
-      return;
+  const [invalidFirstName, setInvalidFirstName] = useState(undefined);
+  const [invalidLastName, setInvalidLastName] = useState(undefined);
+  const [invalidEmail, setInvalidEmail] = useState(undefined);
+  const [invalidPassword, setInvalidPassword] = useState(undefined);
+
+  const checkValidation = () => {
+    const resultInvalidFirstName = validate(registerUserValidation.first_name, registerData.first_name);
+    const resultInvalidLastName = validate(registerUserValidation.last_name, registerData.last_name);
+    const resultInvalidEmail = validate(registerUserValidation.email, registerData.email);
+    const resultInvalidPassword = validate(registerUserValidation.password, registerData.password);
+
+    if (resultInvalidFirstName || resultInvalidLastName || resultInvalidEmail || resultInvalidPassword) {
+      setInvalidFirstName(resultInvalidFirstName);
+      setInvalidLastName(resultInvalidLastName);
+      setInvalidEmail(resultInvalidEmail);
+      setInvalidPassword(resultInvalidPassword);
+      return false;
     }
+
+    if (registerData.password !== confirmPassword) {
+      dispatch(toggleAlert({ isShow: "show", variant: "danger", message: "Confirm password doesn't match" }));
+      dispatch(setRegisterData({ ...registerData, password: "" }));
+      setConfirmPassword("");
+      return false;
+    }
+
+    return true;
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    checkConfirmPassword();
+  const handleRegister = async () => {
     try {
-      await axiosClient.post("/api/users/register", registerData);
-      dispatch(
-        setAlert({
-          isOpen: true,
-          text: "New Account created, please login!",
-          color: "success",
-        })
-      );
-      router.replace("/");
+      const isValid = checkValidation();
+      if (isValid) {
+        await axiosClient.post("/api/users/register", registerData);
+        dispatch(toggleAlert({ isShow: "hide", variant: "success", message: "New account created!, please login" }));
+        router.push("/login?success=true");
+      }
     } catch (error) {
       const { errors } = error.response.data;
-      dispatch(
-        setRegisterData({
-          first_name: "",
-          last_name: "",
-          email: "",
-          password: "",
-        })
-      );
+      dispatch(toggleAlert({ isShow: "show", variant: "danger", message: errors }));
+      dispatch(setRegisterData({ ...registerData, password: "" }));
       setConfirmPassword("");
-      dispatch(
-        setAlert({
-          isOpen: true,
-          text: errors,
-          color: "danger",
-        })
-      );
       console.error(error);
     }
   };
 
   return (
     <LayoutAuth>
-      <div className="card" style={{ width: "20rem" }}>
+      <div className="card" style={{ width: "28rem" }}>
         <h5 className="card-header">Register</h5>
         <div className="card-body">
-          {alert.isOpen && (
-            <Alert key={alert.color} variant={alert.color}>
-              {alert.text}
-            </Alert>
-          )}
-          <form className="row g-3" onSubmit={(e) => handleRegister(e)}>
+          <CustomAlert />
+          <form className="row g-3">
             <div className="col-md-6">
               <label className="form-label">First Name</label>
-              <input type="text" className="form-control" value={registerData.first_name} onChange={(e) => dispatch(setRegisterData({ ...registerData, first_name: e.target.value }))} />
+              <input type="text" className={`form-control ${invalidFirstName ? "is-invalid" : ""}`} value={registerData.first_name} onChange={(e) => dispatch(setRegisterData({ ...registerData, first_name: e.target.value }))} />
+              <div className="invalid-feedback">{invalidFirstName && invalidFirstName[0].message}</div>
             </div>
             <div className="col-md-6">
               <label className="form-label">Last Name</label>
-              <input type="text" className="form-control" value={registerData.last_name} onChange={(e) => dispatch(setRegisterData({ ...registerData, last_name: e.target.value }))} />
+              <input type="text" className={`form-control ${invalidLastName ? "is-invalid" : ""}`} value={registerData.last_name} onChange={(e) => dispatch(setRegisterData({ ...registerData, last_name: e.target.value }))} />
+              <div className="invalid-feedback">{invalidLastName && invalidLastName[0].message}</div>
             </div>
             <div className="col-12">
               <label className="form-label">Email</label>
-              <input type="email" className="form-control" value={registerData.email} onChange={(e) => dispatch(setRegisterData({ ...registerData, email: e.target.value }))} />
+              <input type="email" className={`form-control ${invalidEmail ? "is-invalid" : ""}`} value={registerData.email} onChange={(e) => dispatch(setRegisterData({ ...registerData, email: e.target.value }))} />
+              <div className="invalid-feedback">{invalidEmail && invalidEmail[0].message}</div>
             </div>
             <div className="col-12">
               <label className="form-label">Password</label>
-              <input type="password" className="form-control" value={registerData.password} onChange={(e) => dispatch(setRegisterData({ ...registerData, password: e.target.value }))} />
+              <input type="password" className={`form-control ${invalidPassword ? "is-invalid" : ""}`} value={registerData.password} onChange={(e) => dispatch(setRegisterData({ ...registerData, password: e.target.value }))} />
+              <div className="invalid-feedback">{invalidPassword && invalidPassword[0].message}</div>
             </div>
             <div className="col-12">
               <label className="form-label">Confirm Password</label>
               <input type="password" className="form-control" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
             <div className="col-12">
-              <button type="submit" className="btn btn-primary">
+              <button type="button" className="btn btn-primary" onClick={handleRegister}>
                 Register
               </button>
             </div>

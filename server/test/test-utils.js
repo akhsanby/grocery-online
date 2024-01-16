@@ -93,3 +93,14 @@ export const getTestProduct = async () => {
     },
   });
 };
+
+export const getUserToken = async (user_id) => {
+  return await prismaClient.user.findFirst({
+    where: {
+      user_id: user_id,
+    },
+    select: {
+      token: true,
+    },
+  });
+};

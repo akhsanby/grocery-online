@@ -1,21 +1,22 @@
 import { useDispatch, useSelector } from "react-redux";
-import { setCurrentProducts, handleCloseModal, toggleCreateModal } from "@/app/features/product-slice.js";
-import { setAlert, resetAlert } from "@/app/features/user-slice.js";
-import nookies from "nookies";
-import { useRouter } from "next/router";
+import { getProducts, toggleCreateModal } from "@/app/features/product-slice.js";
 import { useState } from "react";
-import { createProduct, getProducts } from "@/utils/api.js";
+import { createProduct } from "@/utils/api.js";
+import validate, { createProductValidation } from "@/utils/validation/validate.js";
 
 // bootstrap components
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
-import Alert from "react-bootstrap/Alert";
 
 export default function CreateProduct() {
   const dispatch = useDispatch();
-  const alert = useSelector((state) => state.user.alert);
   const showCreateModal = useSelector((state) => state.product.showCreateModal);
-  const currentCategories = useSelector((state) => state.product.currentCategories.data);
+  const categories = useSelector((state) => state.category.categories.data);
+
+  const [invalidName, setInvalidName] = useState(undefined);
+  const [invalidPrice, setInvalidPrice] = useState(undefined);
+  const [invalidQty, setInvalidQty] = useState(undefined);
+  const [invalidDescription, setInvalidDescription] = useState(undefined);
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -37,59 +38,70 @@ export default function CreateProduct() {
     });
   };
 
+  function checkValidation() {
+    const resultInvalidName = validate(createProductValidation.name, newProduct.name);
+    const resultInvalidPrice = validate(createProductValidation.price, newProduct.price);
+    const resultInvalidQty = validate(createProductValidation.qty, newProduct.stock_quantity);
+    const resultInvalidDescription = validate(createProductValidation.description, newProduct.description);
+
+    if (resultInvalidName || resultInvalidPrice || resultInvalidQty || resultInvalidDescription) {
+      setInvalidName(resultInvalidName);
+      setInvalidPrice(resultInvalidPrice);
+      setInvalidQty(resultInvalidQty);
+      setInvalidDescription(resultInvalidDescription);
+      return false;
+    } else {
+      setInvalidName(undefined);
+      setInvalidPrice(undefined);
+      setInvalidQty(undefined);
+      setInvalidDescription(undefined);
+      return true;
+    }
+  }
+
   async function handleCreateProduct() {
     try {
-      const cookies = nookies.get();
-      await createProduct(cookies.token, newProduct);
-      const resultProducts = await getProducts(cookies.token);
-      const { data: products, paging } = resultProducts.data;
-      dispatch(setCurrentProducts({ products, paging }));
-      resetCreateForm();
-      dispatch(toggleCreateModal());
+      const isValid = checkValidation();
+      if (isValid) {
+        await createProduct(cookies.token, newProduct);
+        const queryParams = {};
+        dispatch(getProducts(queryParams));
+        resetCreateForm();
+        dispatch(toggleCreateModal());
+      }
     } catch (error) {
-      const { errors } = error.response.data;
-      dispatch(setAlert({ isOpen: true, text: errors, color: "danger" }));
       console.error(error);
     }
   }
 
   return (
-    <Modal
-      show={showCreateModal}
-      onHide={() => {
-        dispatch(toggleCreateModal());
-        dispatch(resetAlert());
-      }}
-      keyboard={false}
-    >
+    <Modal show={showCreateModal} onHide={() => dispatch(toggleCreateModal())} keyboard={false}>
       <Modal.Header closeButton>
         <Modal.Title>Create Product</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {alert.isOpen && (
-          <Alert key={alert.color} variant={alert.color}>
-            {alert.text}
-          </Alert>
-        )}
         <div className="mb-1">
           <label className="form-label">Name</label>
-          <input type="text" className="form-control form-control-sm" value={newProduct?.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} />
+          <input type="text" className={`form-control ${invalidName ? "is-invalid" : ""}`} value={newProduct?.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} />
+          <div className="invalid-feedback">{invalidName && invalidName[0].message}</div>
         </div>
         <div className="row g-3">
-          <div className="col-8 mb-1">
+          <div className="col-6 mb-1">
             <label className="form-label">Price</label>
-            <input type="number" className="form-control form-control-sm" value={newProduct?.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} />
+            <input type="number" className={`form-control ${invalidPrice ? "is-invalid" : ""}`} value={newProduct?.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} />
+            <div className="invalid-feedback">{invalidPrice && invalidPrice[0].message}</div>
           </div>
-          <div className="col-4 mb-1">
+          <div className="col-6 mb-1">
             <label className="form-label">Qty</label>
-            <input type="number" className="form-control form-control-sm" value={newProduct?.stock_quantity} onChange={(e) => setNewProduct({ ...newProduct, stock_quantity: e.target.value })} />
+            <input type="number" className={`form-control ${invalidQty ? "is-invalid" : ""}`} value={newProduct?.stock_quantity} onChange={(e) => setNewProduct({ ...newProduct, stock_quantity: e.target.value })} />
+            <div className="invalid-feedback">{invalidQty && invalidQty[0].message}</div>
           </div>
         </div>
         <div className="mb-1">
           <label className="form-label">Category</label>
-          <select className="form-select form-select-sm" value={newProduct?.category_id} onChange={(e) => setNewProduct({ ...newProduct, category_id: e.target.value })}>
-            {currentCategories.map((category, index) => (
-              <option key={index} value={category.category_id}>
+          <select className="form-select" value={newProduct?.category_id} onChange={(e) => setNewProduct({ ...newProduct, category_id: e.target.value })}>
+            {categories.map((category, index) => (
+              <option key={index} value={category.category_id} disabled={category.category_id == 0}>
                 {category.name}
               </option>
             ))}
@@ -97,7 +109,8 @@ export default function CreateProduct() {
         </div>
         <div className="mb-1">
           <label className="form-label">Description</label>
-          <textarea type="text" rows="3" className="form-control form-control-sm" value={newProduct?.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} />
+          <textarea type="text" rows="3" className={`form-control ${invalidDescription ? "is-invalid" : ""}`} value={newProduct?.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} />
+          <div className="invalid-feedback">{invalidDescription && invalidDescription[0].message}</div>
         </div>
       </Modal.Body>
       <Modal.Footer>

@@ -1,19 +1,27 @@
 import axiosClient from "@/utils/axios-client";
 import Link from "next/link";
 import nookies from "nookies";
-import { useRouter } from "next/router";
+import { withRouter } from "next/router";
+import { getCarts } from "@/app/features/cart-slice.js";
+import { useDispatch, useSelector } from "react-redux";
 
 // bootstrap component
 import NavDropdown from "react-bootstrap/NavDropdown";
+import { useEffect } from "react";
 
-export default function NavbarComponent({ decodeToken }) {
-  const router = useRouter();
+function Navbar({ router, decodeToken }) {
+  const dispatch = useDispatch();
+  const totalItemCart = useSelector((state) => state.cart.carts.count);
+
+  useEffect(() => {
+    dispatch(getCarts(decodeToken.userId));
+  }, []);
 
   const handleLogout = async () => {
     try {
-      const cookies = nookies.get();
+      const { token } = nookies.get();
       await axiosClient.delete("/api/users/logout", {
-        headers: { Authorization: cookies.token },
+        headers: { Authorization: token },
       });
 
       nookies.destroy(null, "token");
@@ -24,16 +32,18 @@ export default function NavbarComponent({ decodeToken }) {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg shadow-sm p-3 bg-body-tertiary rounded">
+    <nav className="navbar navbar-expand-lg shadow-sm bg-body-tertiary sticky-top">
       <div className="container">
-        <span className="navbar-brand fw-bold">Grocery</span>
+        <Link className="navbar-brand fw-bold pointer" href="/home">
+          Grocery
+        </Link>
         <ul className="navbar-nav me-auto"></ul>
         <div className="d-flex gap-3">
-          <NavDropdown className="text-capitalize" title={`${decodeToken?.firstName} ${decodeToken?.lastName}`} id="basic-nav-dropdown">
+          <NavDropdown title={`${decodeToken.firstName} ${decodeToken.lastName}`} id="basic-nav-dropdown">
             <NavDropdown.Item as={Link} href="/profile">
-              <button className="dropdown-item d-flex gap-1 p-0">
+              <button className="dropdown-item d-flex gap-2 p-0">
                 <i className="bi bi-person-circle"></i>
-                <span>Profile ({decodeToken?.userLevel})</span>
+                <span>Profile</span>
               </button>
             </NavDropdown.Item>
             <NavDropdown.Divider />
@@ -45,10 +55,12 @@ export default function NavbarComponent({ decodeToken }) {
           </NavDropdown>
           <Link className="position-relative" href="/cart">
             <i className="bi bi-cart" style={{ color: "black" }}></i>
-            <span className="position-absolute translate-middle badge rounded-pill bg-danger">1</span>
+            <span className="position-absolute translate-middle badge rounded-pill bg-danger">{totalItemCart}</span>
           </Link>
         </div>
       </div>
     </nav>
   );
 }
+
+export default withRouter(Navbar);
